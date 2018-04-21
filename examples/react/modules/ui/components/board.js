@@ -12,7 +12,7 @@ import { UI, Card, Deck } from 'boardgame.io/ui';
 class Board extends React.Component {
   render() {
     return (
-      <UI>
+      <UI sandboxMode={true}>
         <Card />
         <Deck>
           <Card />

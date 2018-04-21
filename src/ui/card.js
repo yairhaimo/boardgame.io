@@ -13,7 +13,7 @@ import { UIContext } from './ui';
 import { Draggable, DragComponent } from 'react-dragtastic';
 import './card.css';
 
-class Card extends React.Component {
+class CardImpl extends React.Component {
   static propTypes = {
     isFaceUp: PropTypes.bool,
     front: PropTypes.node,
@@ -22,6 +22,7 @@ class Card extends React.Component {
     dragZone: PropTypes.string,
     style: PropTypes.any,
     onClick: PropTypes.func,
+    context: PropTypes.any.isRequired,
   };
 
   static defaultProps = {
@@ -36,25 +37,63 @@ class Card extends React.Component {
     ),
   };
 
+  constructor(props) {
+    super(props);
+    this.domRef = React.createRef();
+  }
+
+  state = {};
+
   onClick = () => {
     this.props.onClick();
   };
 
-  renderCard(context) {
+  onDragEnd = () => {
+    if (this.props.context.sandboxMode) {
+      const t = this.domRef.current;
+      this.setState({
+        x: t.offsetLeft,
+        y: t.offsetTop,
+      });
+    }
+  };
+
+  componentWillMount() {
+    this._id = this.props.context.genID();
+  }
+
+  render() {
     const { back, className, style, front, isFaceUp, dragZone } = this.props;
 
     const classNames = ['bgio-card'];
     if (className) classNames.push(className);
 
-    const id = context.genID();
+    let cardStyle = {};
+    if (
+      this.props.context.sandboxMode &&
+      this.state.x !== undefined &&
+      this.state.y !== undefined
+    ) {
+      cardStyle = {
+        position: 'fixed',
+        zIndex: 10,
+        left: this.state.x,
+        top: this.state.y,
+      };
+    }
 
     return (
       <div onClick={this.onClick}>
-        <Draggable id={id} type={dragZone} data={{ card: this }}>
+        <Draggable
+          id={this._id}
+          type={dragZone}
+          onDragEnd={this.onDragEnd}
+          data={{ card: this }}
+        >
           {({ isActive, events }) => (
             <div
               className={classNames.join(' ')}
-              style={{ ...style, opacity: isActive ? 0 : 1 }}
+              style={{ ...style, ...cardStyle, opacity: isActive ? 0 : 1 }}
               {...events}
             >
               {isFaceUp ? front : back}
@@ -62,10 +101,11 @@ class Card extends React.Component {
           )}
         </Draggable>
 
-        <DragComponent for={id}>
+        <DragComponent for={this._id}>
           {({ x, y, isOverAccepted }) => (
             <div
               className={classNames.join(' ')}
+              ref={this.domRef}
               style={{
                 cursor: 'pointer',
                 borderWidth: 2,
@@ -84,14 +124,12 @@ class Card extends React.Component {
       </div>
     );
   }
-
-  render() {
-    return (
-      <UIContext.Consumer>
-        {context => this.renderCard(context)}
-      </UIContext.Consumer>
-    );
-  }
 }
+
+const Card = props => (
+  <UIContext.Consumer>
+    {context => <CardImpl {...props} context={context} />}
+  </UIContext.Consumer>
+);
 
 export { Card };

@@ -14,6 +14,11 @@ const UIContext = React.createContext();
 class UI extends React.Component {
   static propTypes = {
     children: PropTypes.any,
+    sandboxMode: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    sandboxMode: false,
   };
 
   constructor(props) {
@@ -24,6 +29,7 @@ class UI extends React.Component {
 
   getContext = () => ({
     genID: () => ++this._id,
+    sandboxMode: this.props.sandboxMode,
   });
 
   render() {
