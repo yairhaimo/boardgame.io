@@ -9,37 +9,89 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Logo from './logo';
+import { UIContext } from './ui';
+import { Draggable, DragComponent } from 'react-dragtastic';
 import './card.css';
 
-const Card = ({ back, canHover, className, front, isFaceUp, ...rest }) => {
-  const classNames = ['bgio-card'];
-  if (!canHover) classNames.push('no-hover');
-  if (className) classNames.push(className);
+class Card extends React.Component {
+  static propTypes = {
+    isFaceUp: PropTypes.bool,
+    front: PropTypes.node,
+    back: PropTypes.node,
+    className: PropTypes.string,
+    dragZone: PropTypes.string,
+    style: PropTypes.any,
+    onClick: PropTypes.func,
+  };
 
-  return (
-    <div className={classNames.join(' ')} {...rest}>
-      {isFaceUp ? front : back}
-    </div>
-  );
-};
+  static defaultProps = {
+    onClick: () => {},
+    isFaceUp: false,
+    dragZone: 'bgio-card',
+    front: <div className="bgio-card__front">Card</div>,
+    back: (
+      <div className="bgio-card__back">
+        <Logo width="48" />
+      </div>
+    ),
+  };
 
-Card.propTypes = {
-  back: PropTypes.node,
-  canHover: PropTypes.bool,
-  className: PropTypes.string,
-  front: PropTypes.node,
-  isFaceUp: PropTypes.bool,
-};
+  onClick = () => {
+    this.props.onClick();
+  };
 
-Card.defaultProps = {
-  back: (
-    <div className="bgio-card__back">
-      <Logo width="48" />
-    </div>
-  ),
-  canHover: true,
-  front: <div className="bgio-card__front">Card</div>,
-  isFaceUp: false,
-};
+  renderCard(context) {
+    const { back, className, style, front, isFaceUp, dragZone } = this.props;
+
+    const classNames = ['bgio-card'];
+    if (className) classNames.push(className);
+
+    const id = context.genID();
+
+    return (
+      <div onClick={this.onClick}>
+        <Draggable id={id} type={dragZone} data={{ card: this }}>
+          {({ isActive, events }) => (
+            <div
+              className={classNames.join(' ')}
+              style={{ ...style, opacity: isActive ? 0 : 1 }}
+              {...events}
+            >
+              {isFaceUp ? front : back}
+            </div>
+          )}
+        </Draggable>
+
+        <DragComponent for={id}>
+          {({ x, y, isOverAccepted }) => (
+            <div
+              className={classNames.join(' ')}
+              style={{
+                cursor: 'pointer',
+                borderWidth: 2,
+                borderColor: isOverAccepted ? '#afa' : '#aaa',
+                pointerEvents: 'none',
+                position: 'fixed',
+                zIndex: 10,
+                left: x - 50,
+                top: y - 70,
+              }}
+            >
+              {isFaceUp ? front : back}
+            </div>
+          )}
+        </DragComponent>
+      </div>
+    );
+  }
+
+  render() {
+    return (
+      <UIContext.Consumer>
+        {context => this.renderCard(context)}
+      </UIContext.Consumer>
+    );
+  }
+}
 
 export { Card };

@@ -8,71 +8,77 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Droppable } from 'react-dragtastic';
 import './deck.css';
 
 class Deck extends React.Component {
-  constructor(props) {
-    super(props);
-
-    this.state = {
-      cards: props.cards,
-    };
-  }
-
-  onClick = () => {
-    const cards = [...this.state.cards];
-    const topCard = cards.shift();
-
-    if (this.props.onClick) {
-      this.props.onClick(topCard);
-    }
-
-    this.setState({
-      cards,
-    });
+  static propTypes = {
+    children: PropTypes.arrayOf(PropTypes.node),
+    className: PropTypes.string,
+    onClick: PropTypes.func,
+    onDrop: PropTypes.func,
+    splayWidth: PropTypes.number,
+    dragZone: PropTypes.string,
   };
 
-  componentWillReceiveProps(nextProps) {
-    if (this.props.cards.length !== nextProps.cards.length) {
-      this.setState({ cards: nextProps.cards });
+  static defaultProps = {
+    splayWidth: 3,
+    dragZone: 'bgio-card',
+  };
+
+  onClick = () => {
+    if (this.props.onClick && React.Children.count(this.props.children) > 0) {
+      this.props.onClick(React.Children.toArray(this.props.children)[0]);
     }
-  }
+  };
+
+  onDrop = args => {
+    if (this.props.onDrop) {
+      this.props.onDrop(args);
+    }
+  };
 
   render() {
-    const { className, splayWidth, ...rest } = this.props;
-    const { cards } = this.state;
+    const { className, splayWidth, dragZone } = this.props;
     const classNames = ['bgio-deck'];
     if (className) classNames.push(className);
 
+    if (React.Children.count(this.props.children) == 0) {
+      classNames.push('empty');
+    }
+
     return (
-      <div className={classNames.join(' ')} {...rest} onClick={this.onClick}>
-        {cards.map((card, i) =>
-          React.cloneElement(card, {
-            key: i,
-            canHover: i === 0, // Only the top card should apply a css hover effect
-            isFaceUp: i === 0, // Only the top card should ever be face up
-            style: {
-              position: i ? 'absolute' : 'inherit',
-              left: i * splayWidth,
-              zIndex: -i,
-            },
-          })
-        )}
-      </div>
+      <Droppable accepts={dragZone} onDrop={this.onDrop}>
+        {({ isOver, willAccept, events }) => {
+          let classes = [...classNames];
+
+          if (isOver && willAccept) {
+            classes.push('highlight');
+          }
+
+          return (
+            <div
+              className={classes.join(' ')}
+              {...events}
+              onClick={this.onClick}
+            >
+              {React.Children.map(this.props.children, (card, i) =>
+                React.cloneElement(card, {
+                  key: i,
+                  isFaceUp: i === 0,
+                  style: {
+                    position: i ? 'absolute' : 'inherit',
+                    left: i * splayWidth,
+                    zIndex: -i,
+                  },
+                })
+              )}
+            </div>
+          );
+        }}
+      </Droppable>
     );
   }
 }
-
-Deck.propTypes = {
-  cards: PropTypes.arrayOf(PropTypes.node),
-  className: PropTypes.string,
-  onClick: PropTypes.func,
-  splayWidth: PropTypes.number,
-};
-
-Deck.defaultProps = {
-  cards: [],
-  splayWidth: 3,
-};
 
 export { Deck };

@@ -6,10 +6,11 @@
  * https://opensource.org/licenses/MIT.
  */
 
+import { UI } from '../src/ui/ui.js';
 import { Card } from '../src/ui/card.js';
 import { Deck } from '../src/ui/deck.js';
 import { Grid } from '../src/ui/grid.js';
 import { HexGrid } from '../src/ui/hex.js';
 import Token from '../src/ui/token.js';
 
-export { Card, Deck, Grid, HexGrid, Token };
+export { UI, Card, Deck, Grid, HexGrid, Token };

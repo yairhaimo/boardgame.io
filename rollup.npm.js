@@ -28,6 +28,7 @@ const globals = {
   react: 'React',
   redux: 'Redux',
   'prop-types': 'PropTypes',
+  'react-dragtastic': 'ReactDragtastic',
   mousetrap: 'Mousetrap',
   'socket.io-client': 'io',
 };

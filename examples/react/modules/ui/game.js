@@ -6,15 +6,10 @@
  * https://opensource.org/licenses/MIT.
  */
 
-.bgio-deck {
-  position: relative;
-  display: inline-flex;
-  border-radius: 6px;
-  width: 100px;
-  height: 140px;
-  z-index: 1;
-}
+import { Game } from 'boardgame.io/core';
 
-.bgio-deck.empty {
-  border: 2px dashed #ccc;
-}
+const UIDemo = Game({
+  name: 'ui-demo',
+});
+
+export default UIDemo;

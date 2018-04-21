@@ -12,6 +12,7 @@ import phases from './phases';
 import liars_dice from './liars-dice';
 import random from './random';
 import turnorder from './turnorder';
+import ui from './ui';
 
 const routes = [
   {
@@ -37,6 +38,10 @@ const routes = [
   {
     name: 'Events API',
     routes: turnorder.routes,
+  },
+  {
+    name: 'UI',
+    routes: ui.routes,
   },
 ];
 
