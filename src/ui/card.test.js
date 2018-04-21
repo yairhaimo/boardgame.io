@@ -33,16 +33,3 @@ test('is rendered', () => {
     expect(card.html()).toContain('custom');
   }
 });
-
-test('handlers', () => {
-  const onClick = jest.fn();
-  const card = Enzyme.mount(
-    <UI>
-      <Card onClick={onClick} />
-    </UI>
-  );
-
-  card.simulate('click');
-
-  expect(onClick).toHaveBeenCalled();
-});
