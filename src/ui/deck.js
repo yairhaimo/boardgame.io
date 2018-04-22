@@ -50,12 +50,10 @@ class Deck extends React.Component {
     return (
       <Droppable accepts={dragZone} onDrop={this.onDrop}>
         {({ isOver, willAccept, events }) => {
-          let splay = splayWidth;
           let classes = [...classNames];
 
           if (isOver && willAccept) {
             classes.push('highlight');
-            splay *= 10;
           }
 
           return (
@@ -69,9 +67,8 @@ class Deck extends React.Component {
                   key: i,
                   isFaceUp: i === 0,
                   style: {
-                    transition: '.2s',
                     position: i ? 'absolute' : 'inherit',
-                    left: i * splay,
+                    left: i * splayWidth,
                     zIndex: -i,
                   },
                 })

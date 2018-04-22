@@ -12,10 +12,16 @@ import { UI, Card, Deck } from 'boardgame.io/ui';
 class Board extends React.Component {
   render() {
     return (
-      <UI sandboxMode={true}>
+      <UI sandboxMode={false}>
         <Card />
-        <Deck>
+
+        <Deck onDrop={() => console.log('drop')}>
           <Card />
+          <Card />
+          <Card />
+        </Deck>
+
+        <Deck dragZone="other" onDrop={() => console.log('drop')}>
           <Card />
           <Card />
         </Deck>

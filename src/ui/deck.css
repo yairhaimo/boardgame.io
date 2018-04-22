@@ -8,6 +8,7 @@
 
 .bgio-deck {
   position: relative;
+  margin: 20px;
   display: inline-flex;
   border-radius: 6px;
   width: 100px;

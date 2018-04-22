@@ -111,7 +111,7 @@ class CardImpl extends React.Component {
         </Draggable>
 
         <DragComponent for={this._id}>
-          {({ x, y, isOverAccepted }) => {
+          {({ x, y, isOverAccepted, currentlyHoveredDroppableId }) => {
             const classes = [...classNames];
             let content = back;
 
@@ -119,9 +119,14 @@ class CardImpl extends React.Component {
               content = front;
             }
 
-            if (isOverAccepted) {
-              classes.push('accept');
-              content = null;
+            if (currentlyHoveredDroppableId !== null) {
+              if (isOverAccepted) {
+                classes.push('accept');
+                content = null;
+              } else {
+                classes.push('reject');
+                content = null;
+              }
             }
 
             return (
