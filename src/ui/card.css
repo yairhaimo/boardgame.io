@@ -25,6 +25,12 @@
   overflow: hidden;
 }
 
+.bgio-card.accept {
+  opacity: 0.5;
+  background: #7a7;
+  border-color: #7f7;
+}
+
 .bgio-card__front,
 .bgio-card__back {
   width: 100%;

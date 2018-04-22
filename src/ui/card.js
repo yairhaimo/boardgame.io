@@ -20,6 +20,7 @@ class CardImpl extends React.Component {
     back: PropTypes.node,
     className: PropTypes.string,
     dragZone: PropTypes.string,
+    dragData: PropTypes.any,
     style: PropTypes.any,
     onClick: PropTypes.func,
     context: PropTypes.any.isRequired,
@@ -63,7 +64,15 @@ class CardImpl extends React.Component {
   }
 
   render() {
-    const { back, className, style, front, isFaceUp, dragZone } = this.props;
+    const {
+      back,
+      className,
+      style,
+      front,
+      isFaceUp,
+      dragZone,
+      dragData,
+    } = this.props;
 
     const classNames = ['bgio-card'];
     if (className) classNames.push(className);
@@ -88,7 +97,7 @@ class CardImpl extends React.Component {
           id={this._id}
           type={dragZone}
           onDragEnd={this.onDragEnd}
-          data={{ card: this }}
+          data={dragData}
         >
           {({ isActive, events }) => (
             <div
@@ -102,24 +111,37 @@ class CardImpl extends React.Component {
         </Draggable>
 
         <DragComponent for={this._id}>
-          {({ x, y, isOverAccepted }) => (
-            <div
-              className={classNames.join(' ')}
-              ref={this.domRef}
-              style={{
-                cursor: 'pointer',
-                borderWidth: 2,
-                borderColor: isOverAccepted ? '#afa' : '#aaa',
-                pointerEvents: 'none',
-                position: 'fixed',
-                zIndex: 10,
-                left: x - 50,
-                top: y - 70,
-              }}
-            >
-              {isFaceUp ? front : back}
-            </div>
-          )}
+          {({ x, y, isOverAccepted }) => {
+            const classes = [...classNames];
+            let content = back;
+
+            if (isFaceUp) {
+              content = front;
+            }
+
+            if (isOverAccepted) {
+              classes.push('accept');
+              content = null;
+            }
+
+            return (
+              <div
+                className={classes.join(' ')}
+                ref={this.domRef}
+                style={{
+                  cursor: 'pointer',
+                  borderWidth: 2,
+                  pointerEvents: 'none',
+                  position: 'fixed',
+                  zIndex: 10,
+                  left: x - 50,
+                  top: y - 70,
+                }}
+              >
+                {content}
+              </div>
+            );
+          }}
         </DragComponent>
       </div>
     );
