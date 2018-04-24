@@ -15,16 +15,21 @@ class Board extends React.Component {
       <UI sandboxMode={false}>
         <Card />
 
+        <Deck dragZone="other" onDrop={() => console.log('drop')}>
+          <Card />
+        </Deck>
+
+        <Deck dragZone="other" onDrop={() => console.log('drop')}>
+          <Card />
+        </Deck>
+
         <Deck onDrop={() => console.log('drop')}>
           <Card />
           <Card />
           <Card />
         </Deck>
 
-        <Deck dragZone="other" onDrop={() => console.log('drop')}>
-          <Card />
-          <Card />
-        </Deck>
+        <Card />
       </UI>
     );
   }

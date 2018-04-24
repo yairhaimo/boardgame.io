@@ -85,7 +85,7 @@ class CardImpl extends React.Component {
     ) {
       cardStyle = {
         position: 'fixed',
-        zIndex: 10,
+        zIndex: 5,
         left: this.state.x,
         top: this.state.y,
       };

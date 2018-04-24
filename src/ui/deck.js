@@ -13,7 +13,7 @@ import './deck.css';
 
 class Deck extends React.Component {
   static propTypes = {
-    children: PropTypes.arrayOf(PropTypes.node),
+    children: PropTypes.any,
     className: PropTypes.string,
     onClick: PropTypes.func,
     onDrop: PropTypes.func,
@@ -49,12 +49,8 @@ class Deck extends React.Component {
 
     return (
       <Droppable accepts={dragZone} onDrop={this.onDrop}>
-        {({ isOver, willAccept, events }) => {
+        {({ events }) => {
           let classes = [...classNames];
-
-          if (isOver && willAccept) {
-            classes.push('highlight');
-          }
 
           return (
             <div
@@ -65,6 +61,7 @@ class Deck extends React.Component {
               {React.Children.map(this.props.children, (card, i) =>
                 React.cloneElement(card, {
                   key: i,
+                  dragZone: this.props.dragZone,
                   isFaceUp: i === 0,
                   style: {
                     position: i ? 'absolute' : 'inherit',
