@@ -27,12 +27,6 @@ class UI extends React.Component {
     positions: {},
   };
 
-  constructor(props) {
-    super(props);
-
-    this._id = 0;
-  }
-
   setPosition = (id, position) => {
     if (!this.props.sandboxMode) {
       return;
@@ -50,6 +44,10 @@ class UI extends React.Component {
     setPosition: this.setPosition,
     positions: this.state.positions,
   });
+
+  componentWillMount() {
+    this._id = 0;
+  }
 
   render() {
     const children = React.Children.map(this.props.children, elem =>
