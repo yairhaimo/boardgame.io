@@ -25,6 +25,7 @@ class CardImpl extends React.Component {
     onClick: PropTypes.func,
     context: PropTypes.any.isRequired,
     leavePlaceholder: PropTypes.bool,
+    deckEject: PropTypes.func,
   };
 
   static defaultProps = {
@@ -60,10 +61,15 @@ class CardImpl extends React.Component {
 
     if (this.props.context.sandboxMode) {
       const t = this.domRef.current;
+
       this.props.context.setPosition(this.props.id, {
         x: t.offsetLeft,
         y: t.offsetTop,
       });
+
+      if (this.props.deckEject) {
+        this.props.deckEject(this.props);
+      }
     }
   };
 
@@ -120,15 +126,22 @@ class CardImpl extends React.Component {
         onDragEnd={this.onDragEnd}
         data={{ ...this.props }}
       >
-        {({ isActive, events }) => (
-          <div
-            className={classNames.join(' ')}
-            style={{ ...style, ...cardStyle, opacity: isActive ? 0 : 1 }}
-            {...events}
-          >
-            {isFaceUp ? front : back}
-          </div>
-        )}
+        {({ isActive, events }) => {
+          return (
+            <div
+              className={classNames.join(' ')}
+              style={{
+                ...style,
+                ...cardStyle,
+                opacity: isActive ? 0 : 1,
+                pointerEvents: isActive ? 'none' : 'all',
+              }}
+              {...events}
+            >
+              {isFaceUp ? front : back}
+            </div>
+          );
+        }}
       </Draggable>
     );
 

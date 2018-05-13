@@ -8,6 +8,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { Card } from './card';
 
 const UIContext = React.createContext();
 
@@ -27,6 +28,8 @@ class UI extends React.Component {
     positions: {},
 
     dropped: {},
+
+    ejectedCards: {},
   };
 
   constructor(props) {
@@ -57,6 +60,15 @@ class UI extends React.Component {
     this.setState(s => ({ dropped: { ...s.dropped, [id]: false } }));
   };
 
+  createCard = cardProps => {
+    this.setState(s => ({
+      ejectedCards: [
+        ...s.ejectedCards,
+        <Card {...cardProps} key={cardProps.id} />,
+      ],
+    }));
+  };
+
   getContext = () => ({
     genID: () => ++this._nextID,
     sandboxMode: this.props.sandboxMode,
@@ -65,6 +77,7 @@ class UI extends React.Component {
     undrop: this.undrop,
     positions: this.state.positions,
     dropped: this.state.dropped,
+    createCard: this.createCard,
   });
 
   componentWillMount() {
@@ -72,13 +85,18 @@ class UI extends React.Component {
   }
 
   render() {
-    const children = React.Children.map(this.props.children, elem =>
-      React.cloneElement(elem, {})
-    );
+    let ejectedCards = [];
+    for (const id in this.state.ejectedCards) {
+      const card = this.state.ejectedCards[id];
+      ejectedCards.push(card);
+    }
 
     return (
       <UIContext.Provider value={this.getContext()}>
-        <div className="bgio-ui">{children}</div>
+        <div className="bgio-ui">
+          {this.props.children}
+          {ejectedCards}
+        </div>
       </UIContext.Provider>
     );
   }

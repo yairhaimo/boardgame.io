@@ -74,6 +74,14 @@ class DeckImpl extends React.Component {
     }
   };
 
+  deckEject = cardProps => {
+    if (cardProps.id in this.cards) {
+      this.props.context.createCard(cardProps);
+      delete this.cards[cardProps.id];
+      this.forceUpdate();
+    }
+  };
+
   componentDidMount() {
     const position = this.getPosition();
     for (const id in this.cards) {
@@ -93,6 +101,7 @@ class DeckImpl extends React.Component {
           onClick: this.onClick,
           key: id,
           dragZone: this.props.dragZone,
+          deckEject: this.deckEject,
           leavePlaceholder: false,
         })
       );
