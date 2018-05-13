@@ -26,15 +26,10 @@
 }
 
 .bgio-card.accept {
-  opacity: 0.5;
-  background: #7a7;
-  border-color: #7f7;
+  transform: rotate(10deg);
 }
 
 .bgio-card.reject {
-  opacity: 0.5;
-  background: #a77;
-  border-color: #f77;
 }
 
 .bgio-card__front,

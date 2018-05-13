@@ -154,10 +154,8 @@ class CardImpl extends React.Component {
             if (currentlyHoveredDroppableId !== null) {
               if (isOverAccepted) {
                 classes.push('accept');
-                content = null;
               } else {
                 classes.push('reject');
-                content = null;
               }
             }
 
