@@ -8,16 +8,17 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
+import { UIContext } from './ui';
 import { Droppable } from 'react-dragtastic';
 import './deck.css';
 
-class Deck extends React.Component {
+class DeckImpl extends React.Component {
   static propTypes = {
     children: PropTypes.any,
-    className: PropTypes.string,
     onClick: PropTypes.func,
     onDrop: PropTypes.func,
     splayWidth: PropTypes.number,
+    context: PropTypes.any.isRequired,
     dragZone: PropTypes.string,
   };
 
@@ -26,50 +27,76 @@ class Deck extends React.Component {
     dragZone: 'bgio-card',
   };
 
+  constructor(props) {
+    super(props);
+    this.domRef = React.createRef();
+    this.childrenIDs = [];
+  }
+
   onClick = () => {
-    if (this.props.onClick && React.Children.count(this.props.children) > 0) {
-      this.props.onClick(React.Children.toArray(this.props.children)[0]);
+    if (this.props.onClick) {
+      this.props.onClick();
     }
   };
 
+  getPosition() {
+    let t = this.domRef.current;
+    let x = t.offsetLeft;
+    let y = t.offsetTop;
+
+    while (t.offsetParent) {
+      t = t.offsetParent;
+      x += t.offsetLeft;
+      y += t.offsetTop;
+    }
+
+    return { x, y };
+  }
+
   onDrop = args => {
+    this.props.context.drop(args.id, this.getPosition());
+
     if (this.props.onDrop) {
       this.props.onDrop(args);
     }
   };
 
-  render() {
-    const { className, splayWidth, dragZone } = this.props;
-    const classNames = ['bgio-deck'];
-    if (className) classNames.push(className);
+  registerID = id => {
+    this.childrenIDs.push(id);
+  };
 
-    if (React.Children.count(this.props.children) == 0) {
-      classNames.push('empty');
-    }
+  componentDidMount() {
+    const position = this.getPosition();
+    this.childrenIDs.map(id => this.props.context.setPosition(id, position));
+  }
+
+  render() {
+    const { dragZone } = this.props;
 
     return (
       <Droppable accepts={dragZone} onDrop={this.onDrop}>
         {({ events }) => {
-          let classes = [...classNames];
+          const children = React.Children.map(this.props.children, (card, i) =>
+            React.cloneElement(card, {
+              onClick: this.onClick,
+              key: i,
+              dragZone: this.props.dragZone,
+              leavePlaceholder: false,
+              registerID: this.registerID,
+            })
+          );
 
           return (
             <div
-              className={classes.join(' ')}
               {...events}
-              onClick={this.onClick}
+              ref={this.domRef}
+              style={{
+                width: '100px',
+                height: '140px',
+                display: 'inline-flex',
+              }}
             >
-              {React.Children.map(this.props.children, (card, i) =>
-                React.cloneElement(card, {
-                  key: i,
-                  dragZone: this.props.dragZone,
-                  isFaceUp: i === 0,
-                  style: {
-                    position: i ? 'absolute' : 'inherit',
-                    left: i * splayWidth,
-                    zIndex: -i,
-                  },
-                })
-              )}
+              {children}
             </div>
           );
         }}
@@ -77,5 +104,11 @@ class Deck extends React.Component {
     );
   }
 }
+
+const Deck = props => (
+  <UIContext.Consumer>
+    {context => <DeckImpl {...props} context={context} />}
+  </UIContext.Consumer>
+);
 
 export { Deck };

@@ -25,7 +25,16 @@ class UI extends React.Component {
     // Positions of all the UI elements.
     // Used in sandbox mode.
     positions: {},
+
+    dropped: {},
   };
+
+  constructor(props) {
+    super(props);
+
+    this._id = 0;
+    this._zIndex = 5;
+  }
 
   setPosition = (id, position) => {
     if (!this.props.sandboxMode) {
@@ -33,16 +42,30 @@ class UI extends React.Component {
     }
 
     this.setState(s => ({
-      ...s,
-      positions: { ...s.positions, [id]: position },
+      positions: {
+        ...s.positions,
+        [id]: { ...position, zIndex: this._zIndex++ },
+      },
     }));
+  };
+
+  drop = (id, position) => {
+    this.setPosition(id, position);
+    this.setState(s => ({ dropped: { ...s.dropped, [id]: true } }));
+  };
+
+  eraseDropped = id => {
+    this.setState(s => ({ dropped: { ...s.dropped, [id]: false } }));
   };
 
   getContext = () => ({
     genID: () => ++this._id,
     sandboxMode: this.props.sandboxMode,
     setPosition: this.setPosition,
+    drop: this.drop,
+    eraseDropped: this.eraseDropped,
     positions: this.state.positions,
+    dropped: this.state.dropped,
   });
 
   componentWillMount() {

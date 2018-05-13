@@ -19,10 +19,6 @@ class Board extends React.Component {
           <Card />
         </Deck>
 
-        <Deck dragZone="other" onDrop={() => console.log('drop')}>
-          <Card />
-        </Deck>
-
         <Deck onDrop={() => console.log('drop')}>
           <Card />
           <Card />

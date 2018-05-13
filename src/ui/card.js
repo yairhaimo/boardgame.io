@@ -22,14 +22,18 @@ class CardImpl extends React.Component {
     dragZone: PropTypes.string,
     dragData: PropTypes.any,
     style: PropTypes.any,
+    registerID: PropTypes.func,
     onClick: PropTypes.func,
     context: PropTypes.any.isRequired,
+    leavePlaceholder: PropTypes.bool,
   };
 
   static defaultProps = {
     onClick: () => {},
+    registerID: () => {},
     isFaceUp: false,
     dragZone: 'bgio-card',
+    leavePlaceholder: true,
     front: <div className="bgio-card__front">Card</div>,
     back: (
       <div className="bgio-card__back">
@@ -48,6 +52,11 @@ class CardImpl extends React.Component {
   };
 
   onDragEnd = () => {
+    if (this.props.context.dropped[this._id]) {
+      this.props.context.eraseDropped(this._id);
+      return;
+    }
+
     if (this.props.context.sandboxMode) {
       const t = this.domRef.current;
       this.props.context.setPosition(this._id, {
@@ -59,6 +68,7 @@ class CardImpl extends React.Component {
 
   componentWillMount() {
     this._id = this.props.context.genID();
+    this.props.registerID(this._id);
   }
 
   render() {
@@ -86,7 +96,7 @@ class CardImpl extends React.Component {
 
       cardStyle = {
         position: 'fixed',
-        zIndex: 5,
+        zIndex: position.zIndex || 5,
         left: position.x,
         top: position.y,
       };
@@ -94,19 +104,21 @@ class CardImpl extends React.Component {
       // In case we override the position of the card,
       // we keep an invisible placeholder card in the original
       // location to avoid messing up the layout.
-      placeholder = (
-        <div
-          className={classNames.join(' ')}
-          style={{
-            ...style,
-            opacity: 0,
-            zIndex: -1,
-            cursor: 'default',
-          }}
-        >
-          {isFaceUp ? front : back}
-        </div>
-      );
+      if (this.props.leavePlaceholder) {
+        placeholder = (
+          <div
+            className={classNames.join(' ')}
+            style={{
+              ...style,
+              opacity: 0,
+              zIndex: -100,
+              cursor: 'default',
+            }}
+          >
+            {isFaceUp ? front : back}
+          </div>
+        );
+      }
     }
 
     return (
@@ -117,7 +129,7 @@ class CardImpl extends React.Component {
           id={this._id}
           type={dragZone}
           onDragEnd={this.onDragEnd}
-          data={dragData}
+          data={{ ...dragData, id: this._id }}
         >
           {({ isActive, events }) => (
             <div
@@ -158,7 +170,7 @@ class CardImpl extends React.Component {
                   borderWidth: 2,
                   pointerEvents: 'none',
                   position: 'fixed',
-                  zIndex: 10,
+                  zIndex: 2000000000,
                   left: x - 50,
                   top: y - 70,
                 }}
