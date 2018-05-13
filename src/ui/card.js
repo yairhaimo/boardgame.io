@@ -75,22 +75,44 @@ class CardImpl extends React.Component {
     const classNames = ['bgio-card'];
     if (className) classNames.push(className);
 
+    let placeholder = null;
+
     let cardStyle = {};
     if (
       this.props.context.sandboxMode &&
       this.props.context.positions[this._id] !== undefined
     ) {
       const position = this.props.context.positions[this._id];
+
       cardStyle = {
         position: 'fixed',
         zIndex: 5,
         left: position.x,
         top: position.y,
       };
+
+      // In case we override the position of the card,
+      // we keep an invisible placeholder card in the original
+      // location to avoid messing up the layout.
+      placeholder = (
+        <div
+          className={classNames.join(' ')}
+          style={{
+            ...style,
+            opacity: 0,
+            zIndex: -1,
+            cursor: 'default',
+          }}
+        >
+          {isFaceUp ? front : back}
+        </div>
+      );
     }
 
     return (
       <div onClick={this.onClick}>
+        {placeholder}
+
         <Draggable
           id={this._id}
           type={dragZone}
