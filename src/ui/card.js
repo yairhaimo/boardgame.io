@@ -43,8 +43,6 @@ class CardImpl extends React.Component {
     this.domRef = React.createRef();
   }
 
-  state = {};
-
   onClick = () => {
     this.props.onClick();
   };
@@ -52,7 +50,7 @@ class CardImpl extends React.Component {
   onDragEnd = () => {
     if (this.props.context.sandboxMode) {
       const t = this.domRef.current;
-      this.setState({
+      this.props.context.setPosition(this._id, {
         x: t.offsetLeft,
         y: t.offsetTop,
       });
@@ -80,14 +78,14 @@ class CardImpl extends React.Component {
     let cardStyle = {};
     if (
       this.props.context.sandboxMode &&
-      this.state.x !== undefined &&
-      this.state.y !== undefined
+      this.props.context.positions[this._id] !== undefined
     ) {
+      const position = this.props.context.positions[this._id];
       cardStyle = {
         position: 'fixed',
         zIndex: 5,
-        left: this.state.x,
-        top: this.state.y,
+        left: position.x,
+        top: position.y,
       };
     }
 

@@ -21,15 +21,34 @@ class UI extends React.Component {
     sandboxMode: false,
   };
 
+  state = {
+    // Positions of all the UI elements.
+    // Used in sandbox mode.
+    positions: {},
+  };
+
   constructor(props) {
     super(props);
 
     this._id = 0;
   }
 
+  setPosition = (id, position) => {
+    if (!this.props.sandboxMode) {
+      return;
+    }
+
+    this.setState(s => ({
+      ...s,
+      positions: { ...s.positions, [id]: position },
+    }));
+  };
+
   getContext = () => ({
     genID: () => ++this._id,
     sandboxMode: this.props.sandboxMode,
+    setPosition: this.setPosition,
+    positions: this.state.positions,
   });
 
   render() {
