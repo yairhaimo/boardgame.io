@@ -15,14 +15,13 @@ import './card.css';
 
 class CardImpl extends React.Component {
   static propTypes = {
+    id: PropTypes.string.isRequired,
     isFaceUp: PropTypes.bool,
     front: PropTypes.node,
     back: PropTypes.node,
     className: PropTypes.string,
     dragZone: PropTypes.string,
-    dragData: PropTypes.any,
     style: PropTypes.any,
-    registerID: PropTypes.func,
     onClick: PropTypes.func,
     context: PropTypes.any.isRequired,
     leavePlaceholder: PropTypes.bool,
@@ -30,7 +29,6 @@ class CardImpl extends React.Component {
 
   static defaultProps = {
     onClick: () => {},
-    registerID: () => {},
     isFaceUp: false,
     dragZone: 'bgio-card',
     leavePlaceholder: true,
@@ -51,36 +49,26 @@ class CardImpl extends React.Component {
     this.props.onClick();
   };
 
+  onDragStart = () => {
+    this.props.context.undrop(this.props.id);
+  };
+
   onDragEnd = () => {
-    if (this.props.context.dropped[this._id]) {
-      this.props.context.eraseDropped(this._id);
+    if (this.props.context.dropped[this.props.id]) {
       return;
     }
 
     if (this.props.context.sandboxMode) {
       const t = this.domRef.current;
-      this.props.context.setPosition(this._id, {
+      this.props.context.setPosition(this.props.id, {
         x: t.offsetLeft,
         y: t.offsetTop,
       });
     }
   };
 
-  componentWillMount() {
-    this._id = this.props.context.genID();
-    this.props.registerID(this._id);
-  }
-
   render() {
-    const {
-      back,
-      className,
-      style,
-      front,
-      isFaceUp,
-      dragZone,
-      dragData,
-    } = this.props;
+    const { back, className, style, front, isFaceUp, dragZone } = this.props;
 
     const classNames = ['bgio-card'];
     if (className) classNames.push(className);
@@ -89,17 +77,20 @@ class CardImpl extends React.Component {
 
     let cardStyle = {};
     if (
-      this.props.context.sandboxMode &&
-      this.props.context.positions[this._id] !== undefined
+      (this.props.context.sandboxMode &&
+        this.props.context.positions[this.props.id] !== undefined) ||
+      this.props.context.dropped[this.props.id]
     ) {
-      const position = this.props.context.positions[this._id];
+      const position = this.props.context.positions[this.props.id];
 
-      cardStyle = {
-        position: 'fixed',
-        zIndex: position.zIndex || 5,
-        left: position.x,
-        top: position.y,
-      };
+      if (position) {
+        cardStyle = {
+          position: 'fixed',
+          zIndex: position.zIndex || 5,
+          left: position.x,
+          top: position.y,
+        };
+      }
 
       // In case we override the position of the card,
       // we keep an invisible placeholder card in the original
@@ -121,63 +112,70 @@ class CardImpl extends React.Component {
       }
     }
 
+    let draggable = (
+      <Draggable
+        id={this.props.id}
+        type={dragZone}
+        onDragStart={this.onDragStart}
+        onDragEnd={this.onDragEnd}
+        data={{ ...this.props }}
+      >
+        {({ isActive, events }) => (
+          <div
+            className={classNames.join(' ')}
+            style={{ ...style, ...cardStyle, opacity: isActive ? 0 : 1 }}
+            {...events}
+          >
+            {isFaceUp ? front : back}
+          </div>
+        )}
+      </Draggable>
+    );
+
+    let dragComponent = (
+      <DragComponent for={this.props.id}>
+        {({ x, y, isOverAccepted, currentlyHoveredDroppableId }) => {
+          const classes = [...classNames];
+          let content = back;
+
+          if (isFaceUp) {
+            content = front;
+          }
+
+          if (currentlyHoveredDroppableId !== null) {
+            if (isOverAccepted) {
+              classes.push('accept');
+            } else {
+              classes.push('reject');
+            }
+          }
+
+          return (
+            <div
+              className={classes.join(' ')}
+              ref={this.domRef}
+              style={{
+                cursor: 'pointer',
+                borderWidth: 2,
+                pointerEvents: 'none',
+                position: 'fixed',
+                zIndex: 2000000000,
+                left: x - 50,
+                top: y - 70,
+              }}
+            >
+              {content}
+            </div>
+          );
+        }}
+      </DragComponent>
+    );
+
     return (
       <div onClick={this.onClick}>
         {placeholder}
-
-        <Draggable
-          id={this._id}
-          type={dragZone}
-          onDragEnd={this.onDragEnd}
-          data={{ ...dragData, id: this._id }}
-        >
-          {({ isActive, events }) => (
-            <div
-              className={classNames.join(' ')}
-              style={{ ...style, ...cardStyle, opacity: isActive ? 0 : 1 }}
-              {...events}
-            >
-              {isFaceUp ? front : back}
-            </div>
-          )}
-        </Draggable>
-
-        <DragComponent for={this._id}>
-          {({ x, y, isOverAccepted, currentlyHoveredDroppableId }) => {
-            const classes = [...classNames];
-            let content = back;
-
-            if (isFaceUp) {
-              content = front;
-            }
-
-            if (currentlyHoveredDroppableId !== null) {
-              if (isOverAccepted) {
-                classes.push('accept');
-              } else {
-                classes.push('reject');
-              }
-            }
-
-            return (
-              <div
-                className={classes.join(' ')}
-                ref={this.domRef}
-                style={{
-                  cursor: 'pointer',
-                  borderWidth: 2,
-                  pointerEvents: 'none',
-                  position: 'fixed',
-                  zIndex: 2000000000,
-                  left: x - 50,
-                  top: y - 70,
-                }}
-              >
-                {content}
-              </div>
-            );
-          }}
-        </DragComponent>
+        {draggable}
+        {dragComponent}
       </div>
     );
   }

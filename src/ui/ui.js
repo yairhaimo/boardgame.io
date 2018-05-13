@@ -32,7 +32,7 @@ class UI extends React.Component {
   constructor(props) {
     super(props);
 
-    this._id = 0;
+    this._nextID = 0;
     this._zIndex = 5;
   }
 
@@ -49,27 +49,26 @@ class UI extends React.Component {
     }));
   };
 
-  drop = (id, position) => {
-    this.setPosition(id, position);
+  drop = id => {
     this.setState(s => ({ dropped: { ...s.dropped, [id]: true } }));
   };
 
-  eraseDropped = id => {
+  undrop = id => {
     this.setState(s => ({ dropped: { ...s.dropped, [id]: false } }));
   };
 
   getContext = () => ({
-    genID: () => ++this._id,
+    genID: () => ++this._nextID,
     sandboxMode: this.props.sandboxMode,
     setPosition: this.setPosition,
     drop: this.drop,
-    eraseDropped: this.eraseDropped,
+    undrop: this.undrop,
     positions: this.state.positions,
     dropped: this.state.dropped,
   });
 
   componentWillMount() {
-    this._id = 0;
+    this._nextID = 0;
   }
 
   render() {

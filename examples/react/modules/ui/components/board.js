@@ -13,19 +13,12 @@ class Board extends React.Component {
   render() {
     return (
       <UI sandboxMode={true}>
-        <Card />
-
-        <Deck dragZone="other" onDrop={() => console.log('drop')}>
-          <Card />
-        </Deck>
+        <Card id="1" back={1} />
 
         <Deck onDrop={() => console.log('drop')}>
-          <Card />
-          <Card />
-          <Card />
+          <Card id="2" back={2} />
+          <Card id="3" back={3} />
         </Deck>
-
-        <Card />
       </UI>
     );
   }
