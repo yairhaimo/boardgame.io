@@ -30,6 +30,7 @@ class UI extends React.Component {
     this._zIndex = 5;
     this.cards = {};
     this.decks = {};
+    this.originalCards = new Set();
 
     React.Children.forEach(props.children, child => {
       if (child.type == Card) {
@@ -38,6 +39,7 @@ class UI extends React.Component {
           position: null,
           deckID: null,
         };
+        this.originalCards.add(child.props.id);
       } else {
         const deckID = child.props.id;
         let cardIDs = [];
@@ -81,9 +83,10 @@ class UI extends React.Component {
       deck.cards = deck.cards.filter(item => item != cardID);
     }
 
+    card.deckID = deckID;
+
     // Add card to new deck (if any).
     if (deckID) {
-      card.deckID = deckID;
       const deck = this.decks[card.deckID];
       deck.cards.push(cardID);
     }
@@ -96,7 +99,6 @@ class UI extends React.Component {
     sandboxMode: this.props.sandboxMode,
     setPosition: this.setPosition,
     drop: this.drop,
-    positions: this.positions,
   });
 
   componentWillMount() {
@@ -105,12 +107,17 @@ class UI extends React.Component {
 
   render() {
     let freeCards = [];
+    let placeholders = [];
     for (const id in this.cards) {
       const card = this.cards[id];
       if (!card.deckID) {
         freeCards.push(
           <Card id={id} key={id} position={card.position} {...card.props} />
         );
+      }
+
+      if (this.originalCards.has(id) && (card.position || card.deckID)) {
+        placeholders.push(<div className="bgio-card placeholder" key={id} />);
       }
     }
 
@@ -125,8 +132,6 @@ class UI extends React.Component {
         cards.push(<Card id={cardID} key={'deck:' + cardID} {...card.props} />);
       }
 
-      console.log(cards);
-
       decks.push(
         <Deck id={id} key={id} {...deck.props}>
           {cards}
@@ -137,8 +142,9 @@ class UI extends React.Component {
     return (
       <UIContext.Provider value={this.getContext()}>
         <div className="bgio-ui">
-          {decks}
+          {placeholders}
           {freeCards}
+          {decks}
         </div>
       </UIContext.Provider>
     );

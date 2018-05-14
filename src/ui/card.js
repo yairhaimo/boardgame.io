@@ -24,7 +24,6 @@ class CardImpl extends React.Component {
     style: PropTypes.any,
     onClick: PropTypes.func,
     context: PropTypes.any.isRequired,
-    leavePlaceholder: PropTypes.bool,
     position: PropTypes.any,
     inDeck: PropTypes.bool,
     deckPosition: PropTypes.number,
@@ -34,7 +33,6 @@ class CardImpl extends React.Component {
     onClick: () => {},
     isFaceUp: false,
     dragZone: 'bgio-card',
-    leavePlaceholder: true,
     front: <div className="bgio-card__front">Card</div>,
     back: (
       <div className="bgio-card__back">
@@ -52,10 +50,6 @@ class CardImpl extends React.Component {
     this.props.onClick();
   };
 
-  onDragStart = () => {
-    // this.props.context.undrop(this.props.id);
-  };
-
   onDragEnd = () => {
     if (!this.props.context.sandboxMode) {
       return;
@@ -70,16 +64,15 @@ class CardImpl extends React.Component {
       });
     }
 
-    // if (this.props.deckEject) {
-    //   this.props.deckEject(this.props);
-    // }
+    if (this.isOverAccepted === false) {
+      this.props.context.drop(this.props.id, null);
+    }
   };
 
   render() {
     const classNames = ['bgio-card'];
     if (this.props.className) classNames.push(this.props.className);
 
-    let placeholder = null;
     let cardStyle = {};
 
     if (this.props.context.sandboxMode) {
@@ -92,26 +85,6 @@ class CardImpl extends React.Component {
           left: position.x,
           top: position.y,
         };
-
-        // In case we override the position of the card,
-        // we keep an invisible placeholder card in the original
-        // location to avoid messing up the layout.
-        if (this.props.leavePlaceholder) {
-          placeholder = (
-            <div
-              className={classNames.join(' ')}
-              style={{
-                ...this.props.style,
-                opacity: 0,
-                zIndex: -100,
-                cursor: 'default',
-                pointerEvents: 'none',
-              }}
-            >
-              {this.props.back}
-            </div>
-          );
-        }
       }
 
       if (this.props.inDeck) {
@@ -126,7 +99,6 @@ class CardImpl extends React.Component {
       <Draggable
         id={this.props.id}
         type={this.props.dragZone}
-        onDragStart={this.onDragStart}
         onDragEnd={this.onDragEnd}
         data={{ ...this.props }}
       >
@@ -149,11 +121,14 @@ class CardImpl extends React.Component {
       </Draggable>
     );
 
+    const self = this;
     const dragComponent = (
       <DragComponent for={this.props.id}>
         {({ x, y, isOverAccepted, currentlyHoveredDroppableId }) => {
           const classes = [...classNames];
           let content = this.props.back;
+
+          self.isOverAccepted = isOverAccepted;
 
           if (this.props.isFaceUp) {
             content = this.props.front;
@@ -190,7 +165,6 @@ class CardImpl extends React.Component {
 
     return (
       <div onClick={this.onClick}>
-        {placeholder}
         {draggable}
         {dragComponent}
       </div>

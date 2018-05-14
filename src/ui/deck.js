@@ -45,8 +45,6 @@ class DeckImpl extends React.Component {
   };
 
   render() {
-    const { dragZone } = this.props;
-
     let cardIndex = 0;
     const cards = React.Children.map(this.props.children, card =>
       React.cloneElement(card, {
@@ -58,7 +56,7 @@ class DeckImpl extends React.Component {
     );
 
     return (
-      <Droppable accepts={dragZone} onDrop={this.onDrop}>
+      <Droppable accepts={this.props.dragZone} onDrop={this.onDrop}>
         {({ events }) => {
           return (
             <div
