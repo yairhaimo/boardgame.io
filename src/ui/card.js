@@ -85,9 +85,9 @@ class CardImpl extends React.Component {
 
     let cardStyle = {};
     if (
-      (this.props.context.sandboxMode &&
-        this.props.context.positions[this.props.id] !== undefined) ||
-      this.props.context.dropped[this.props.id]
+      this.props.context.sandboxMode &&
+      (this.props.context.positions[this.props.id] !== undefined ||
+        this.props.context.dropped[this.props.id])
     ) {
       const position = this.props.context.positions[this.props.id];
 

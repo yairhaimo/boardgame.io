@@ -129,7 +129,8 @@ class DeckImpl extends React.Component {
                 padding: this.props.padding,
                 width: '100px',
                 height: '140px',
-                display: 'inline-flex',
+                display: 'block',
+                float: 'left',
               }}
             >
               {cards}
