@@ -9,6 +9,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Card } from './card';
+import { Deck } from './deck';
 
 const UIContext = React.createContext();
 
@@ -27,51 +28,66 @@ class UI extends React.Component {
 
     this._nextID = 0;
     this._zIndex = 5;
-    this.freeCards = {};
-    this.dropped = {};
-    this.positions = {};
+    this.cards = {};
+    this.decks = {};
 
     React.Children.forEach(props.children, child => {
       if (child.type == Card) {
-        this.freeCards[child.props.id] = child.props;
+        this.cards[child.props.id] = {
+          props: child.props,
+          position: null,
+          deckID: null,
+        };
+      } else {
+        const deckID = child.props.id;
+        let cardIDs = [];
+
+        React.Children.forEach(child.props.children, card => {
+          cardIDs.push(card.props.id);
+          this.cards[card.props.id] = {
+            props: card.props,
+            position: null,
+            deckID,
+          };
+        });
+
+        this.decks[child.props.id] = {
+          props: child.props,
+          cards: cardIDs,
+        };
       }
     });
   }
 
-  setPosition = (id, position) => {
+  setPosition = (cardID, position) => {
     if (!this.props.sandboxMode) {
       return;
     }
 
-    this.positions[id] = { ...position, zIndex: this._zIndex++ };
+    this.cards[cardID].position = { ...position, zIndex: this._zIndex++ };
     this.forceUpdate();
   };
 
-  drop = id => {
+  drop = (cardID, deckID) => {
     if (!this.props.sandboxMode) {
       return;
     }
 
-    this.dropped[id] = true;
-    this.freeCards[id] = null;
-    this.forceUpdate();
-  };
+    const card = this.cards[cardID];
 
-  undrop = id => {
-    if (!this.props.sandboxMode) {
-      return;
+    // Remove card from any deck it was a part of.
+    if (card.deckID) {
+      const deck = this.decks[card.deckID];
+      deck.cards = deck.cards.filter(item => item != cardID);
     }
 
-    this.dropped[id] = false;
-    this.forceUpdate();
-  };
-
-  createCard = cardProps => {
-    if (!this.props.sandboxMode) {
-      return;
+    // Add card to new deck (if any).
+    if (deckID) {
+      card.deckID = deckID;
+      const deck = this.decks[card.deckID];
+      deck.cards.push(cardID);
     }
 
-    this.freeCards[cardProps.id] = cardProps;
     this.forceUpdate();
   };
 
@@ -80,10 +96,7 @@ class UI extends React.Component {
     sandboxMode: this.props.sandboxMode,
     setPosition: this.setPosition,
     drop: this.drop,
-    undrop: this.undrop,
     positions: this.positions,
-    dropped: this.dropped,
-    createCard: this.createCard,
   });
 
   componentWillMount() {
@@ -92,21 +105,39 @@ class UI extends React.Component {
 
   render() {
     let freeCards = [];
-    for (const id in this.freeCards) {
-      const cardProps = this.freeCards[id];
-      if (cardProps) {
-        freeCards.push(<Card id={id} {...cardProps} key={id} />);
+    for (const id in this.cards) {
+      const card = this.cards[id];
+      if (!card.deckID) {
+        freeCards.push(
+          <Card id={id} key={id} position={card.position} {...card.props} />
+        );
       }
     }
 
-    const children = React.Children.map(this.props.children, child => {
-      if (child.type != Card) return child;
-    });
+    let decks = [];
+    for (const id in this.decks) {
+      const deck = this.decks[id];
+
+      let cards = [];
+      for (let i = 0; i < deck.cards.length; i++) {
+        const cardID = deck.cards[i];
+        const card = this.cards[cardID];
+        cards.push(<Card id={cardID} key={'deck:' + cardID} {...card.props} />);
+      }
+
+      console.log(cards);
+
+      decks.push(
+        <Deck id={id} key={id} {...deck.props}>
+          {cards}
+        </Deck>
+      );
+    }
 
     return (
       <UIContext.Provider value={this.getContext()}>
         <div className="bgio-ui">
-          {children}
+          {decks}
           {freeCards}
         </div>
       </UIContext.Provider>

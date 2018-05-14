@@ -8,18 +8,18 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { Card } from './card';
 import { UIContext } from './ui';
 import { Droppable } from 'react-dragtastic';
 import './deck.css';
 
 class DeckImpl extends React.Component {
   static propTypes = {
+    context: PropTypes.any.isRequired,
+    id: PropTypes.string.isRequired,
     children: PropTypes.any,
     onClick: PropTypes.func,
     onDrop: PropTypes.func,
     splayWidth: PropTypes.number,
-    context: PropTypes.any.isRequired,
     dragZone: PropTypes.string,
     padding: PropTypes.number,
   };
@@ -30,91 +30,32 @@ class DeckImpl extends React.Component {
     dragZone: 'bgio-card',
   };
 
-  constructor(props) {
-    super(props);
-    this.domRef = React.createRef();
-
-    // This contains the actual cards that will be rendered.
-    // It is initialized with the children of this component,
-    // but can be modified as the user drags cards in and
-    // out of this deck.
-    this.cards = {};
-
-    React.Children.forEach(
-      props.children,
-      child => (this.cards[child.props.id] = child.props)
-    );
-  }
-
   onClick = () => {
     if (this.props.onClick) {
       this.props.onClick();
     }
   };
 
-  getPosition() {
-    let t = this.domRef.current;
-    let x = t.offsetLeft + this.props.padding;
-    let y = t.offsetTop + this.props.padding;
-
-    while (t.offsetParent) {
-      t = t.offsetParent;
-      x += t.offsetLeft;
-      y += t.offsetTop;
-    }
-
-    return { x, y };
-  }
-
   onDrop = cardProps => {
-    const position = this.getPosition();
-    this.props.context.drop(cardProps.id);
-    this.props.context.setPosition(cardProps.id, position);
-    this.cards[cardProps.id] = cardProps;
-    this.forceUpdate();
+    this.props.context.drop(cardProps.id, this.props.id);
 
     if (this.props.onDrop) {
-      this.props.onDrop(cardProps.id);
+      this.props.onDrop(cardProps);
     }
   };
-
-  deckEject = cardProps => {
-    if (cardProps.id in this.cards) {
-      this.props.context.createCard(cardProps);
-      this.cards[cardProps.id] = null;
-      this.forceUpdate();
-    }
-  };
-
-  componentDidMount() {
-    const position = this.getPosition();
-    for (const id in this.cards) {
-      this.props.context.setPosition(id, position);
-    }
-  }
 
   render() {
     const { dragZone } = this.props;
 
-    const cards = [];
-
-    for (const id in this.cards) {
-      const cardProps = this.cards[id];
-
-      if (cardProps) {
-        const otherProps = {
-          onClick: this.onClick,
-          key: 'deck:' + id,
-          dragZone: this.props.dragZone,
-          deckEject: this.deckEject,
-          leavePlaceholder: false,
-        };
-
-        const allProps = { ...cardProps, ...otherProps };
-
-        cards.push(<Card {...allProps} />);
-      }
-    }
+    let cardIndex = 0;
+    const cards = React.Children.map(this.props.children, card =>
+      React.cloneElement(card, {
+        onClick: this.onClick,
+        dragZone: this.props.dragZone,
+        inDeck: true,
+        deckPosition: cardIndex++,
+      })
+    );
 
     return (
       <Droppable accepts={dragZone} onDrop={this.onDrop}>
@@ -122,11 +63,11 @@ class DeckImpl extends React.Component {
           return (
             <div
               {...events}
-              ref={this.domRef}
               style={{
                 background: '#eee',
                 marginRight: 20,
                 padding: this.props.padding,
+                position: 'relative',
                 width: '100px',
                 height: '140px',
                 display: 'block',
