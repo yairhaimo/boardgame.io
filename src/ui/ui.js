@@ -22,10 +22,6 @@ class UI extends React.Component {
     sandboxMode: false,
   };
 
-  state = {
-    positions: {},
-  };
-
   constructor(props) {
     super(props);
 
@@ -33,6 +29,7 @@ class UI extends React.Component {
     this._zIndex = 5;
     this.freeCards = {};
     this.dropped = {};
+    this.positions = {};
 
     React.Children.forEach(props.children, child => {
       if (child.type == Card) {
@@ -46,26 +43,34 @@ class UI extends React.Component {
       return;
     }
 
-    this.setState(s => ({
-      positions: {
-        ...s.positions,
-        [id]: { ...position, zIndex: this._zIndex++ },
-      },
-    }));
+    this.positions[id] = { ...position, zIndex: this._zIndex++ };
+    this.forceUpdate();
   };
 
   drop = id => {
+    if (!this.props.sandboxMode) {
+      return;
+    }
+
     this.dropped[id] = true;
     this.freeCards[id] = null;
     this.forceUpdate();
   };
 
   undrop = id => {
+    if (!this.props.sandboxMode) {
+      return;
+    }
+
     this.dropped[id] = false;
     this.forceUpdate();
   };
 
   createCard = cardProps => {
+    if (!this.props.sandboxMode) {
+      return;
+    }
+
     this.freeCards[cardProps.id] = cardProps;
     this.forceUpdate();
   };
@@ -76,7 +81,7 @@ class UI extends React.Component {
     setPosition: this.setPosition,
     drop: this.drop,
     undrop: this.undrop,
-    positions: this.state.positions,
+    positions: this.positions,
     dropped: this.dropped,
     createCard: this.createCard,
   });
