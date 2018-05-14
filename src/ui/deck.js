@@ -33,11 +33,16 @@ class DeckImpl extends React.Component {
   constructor(props) {
     super(props);
     this.domRef = React.createRef();
+
+    // This contains the actual cards that will be rendered.
+    // It is initialized with the children of this component,
+    // but can be modified as the user drags cards in and
+    // out of this deck.
     this.cards = {};
 
     React.Children.forEach(
       props.children,
-      child => (this.cards[child.props.id] = child)
+      child => (this.cards[child.props.id] = child.props)
     );
   }
 
@@ -65,8 +70,7 @@ class DeckImpl extends React.Component {
     const position = this.getPosition();
     this.props.context.drop(cardProps.id);
     this.props.context.setPosition(cardProps.id, position);
-
-    this.cards[cardProps.id] = <Card {...cardProps} key={cardProps.id} />;
+    this.cards[cardProps.id] = cardProps;
     this.forceUpdate();
 
     if (this.props.onDrop) {
@@ -77,7 +81,7 @@ class DeckImpl extends React.Component {
   deckEject = cardProps => {
     if (cardProps.id in this.cards) {
       this.props.context.createCard(cardProps);
-      delete this.cards[cardProps.id];
+      this.cards[cardProps.id] = null;
       this.forceUpdate();
     }
   };
@@ -95,16 +99,21 @@ class DeckImpl extends React.Component {
     const cards = [];
 
     for (const id in this.cards) {
-      const card = this.cards[id];
-      cards.push(
-        React.cloneElement(card, {
+      const cardProps = this.cards[id];
+
+      if (cardProps) {
+        const otherProps = {
           onClick: this.onClick,
-          key: id,
+          key: 'deck:' + id,
           dragZone: this.props.dragZone,
           deckEject: this.deckEject,
           leavePlaceholder: false,
-        })
-      );
+        };
+
+        const allProps = { ...cardProps, ...otherProps };
+
+        cards.push(<Card {...allProps} />);
+      }
     }
 
     return (

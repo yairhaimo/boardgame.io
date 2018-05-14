@@ -62,10 +62,12 @@ class CardImpl extends React.Component {
     if (this.props.context.sandboxMode) {
       const t = this.domRef.current;
 
-      this.props.context.setPosition(this.props.id, {
-        x: t.offsetLeft,
-        y: t.offsetTop,
-      });
+      if (t) {
+        this.props.context.setPosition(this.props.id, {
+          x: t.offsetLeft,
+          y: t.offsetTop,
+        });
+      }
 
       if (this.props.deckEject) {
         this.props.deckEject(this.props);
@@ -110,6 +112,7 @@ class CardImpl extends React.Component {
               opacity: 0,
               zIndex: -100,
               cursor: 'default',
+              pointerEvents: 'none',
             }}
           >
             {isFaceUp ? front : back}

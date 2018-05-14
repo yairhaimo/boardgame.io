@@ -23,13 +23,7 @@ class UI extends React.Component {
   };
 
   state = {
-    // Positions of all the UI elements.
-    // Used in sandbox mode.
     positions: {},
-
-    dropped: {},
-
-    ejectedCards: {},
   };
 
   constructor(props) {
@@ -37,6 +31,14 @@ class UI extends React.Component {
 
     this._nextID = 0;
     this._zIndex = 5;
+    this.freeCards = {};
+    this.dropped = {};
+
+    React.Children.forEach(props.children, child => {
+      if (child.type == Card) {
+        this.freeCards[child.props.id] = child.props;
+      }
+    });
   }
 
   setPosition = (id, position) => {
@@ -53,20 +55,19 @@ class UI extends React.Component {
   };
 
   drop = id => {
-    this.setState(s => ({ dropped: { ...s.dropped, [id]: true } }));
+    this.dropped[id] = true;
+    this.freeCards[id] = null;
+    this.forceUpdate();
   };
 
   undrop = id => {
-    this.setState(s => ({ dropped: { ...s.dropped, [id]: false } }));
+    this.dropped[id] = false;
+    this.forceUpdate();
   };
 
   createCard = cardProps => {
-    this.setState(s => ({
-      ejectedCards: [
-        ...s.ejectedCards,
-        <Card {...cardProps} key={cardProps.id} />,
-      ],
-    }));
+    this.freeCards[cardProps.id] = cardProps;
+    this.forceUpdate();
   };
 
   getContext = () => ({
@@ -76,7 +77,7 @@ class UI extends React.Component {
     drop: this.drop,
     undrop: this.undrop,
     positions: this.state.positions,
-    dropped: this.state.dropped,
+    dropped: this.dropped,
     createCard: this.createCard,
   });
 
@@ -85,17 +86,23 @@ class UI extends React.Component {
   }
 
   render() {
-    let ejectedCards = [];
-    for (const id in this.state.ejectedCards) {
-      const card = this.state.ejectedCards[id];
-      ejectedCards.push(card);
+    let freeCards = [];
+    for (const id in this.freeCards) {
+      const cardProps = this.freeCards[id];
+      if (cardProps) {
+        freeCards.push(<Card id={id} {...cardProps} key={id} />);
+      }
     }
+
+    const children = React.Children.map(this.props.children, child => {
+      if (child.type != Card) return child;
+    });
 
     return (
       <UIContext.Provider value={this.getContext()}>
         <div className="bgio-ui">
-          {this.props.children}
-          {ejectedCards}
+          {children}
+          {freeCards}
         </div>
       </UIContext.Provider>
     );
