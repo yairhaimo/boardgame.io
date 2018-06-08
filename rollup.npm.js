@@ -54,7 +54,7 @@ export default [
     globals,
     output: { file: 'dist/react.js', format: 'umd' },
     name: 'Client',
-    plugins: plugins,
+    plugins,
   },
 
   {
@@ -63,7 +63,7 @@ export default [
     globals,
     output: { file: 'dist/client.js', format: 'umd' },
     name: 'Client',
-    plugins: plugins,
+    plugins,
   },
 
   {
@@ -72,14 +72,23 @@ export default [
     globals,
     output: { file: 'dist/react-native.js', format: 'umd' },
     name: 'ReactNativeClient',
-    plugins: plugins,
+    plugins,
   },
 
   {
     input: 'packages/core.js',
     output: { file: 'dist/core.js', format: 'umd' },
     name: 'Core',
-    plugins: plugins,
+    plugins,
+  },
+
+  {
+    input: 'packages/ai.js',
+    external: Object.keys(globals),
+    output: { file: 'dist/ai.js', format: 'umd' },
+    name: 'AI',
+    globals,
+    plugins,
   },
 
   {
@@ -88,7 +97,7 @@ export default [
     globals,
     output: { file: 'dist/ui.js', format: 'umd' },
     name: 'UI',
-    plugins: plugins,
+    plugins,
   },
 
   // UMD and ES versions.
