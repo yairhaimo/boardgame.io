@@ -19,6 +19,7 @@ class DeckImpl extends React.Component {
     children: PropTypes.any,
     onClick: PropTypes.func,
     onDrop: PropTypes.func,
+    onRemove: PropTypes.func,
     splayWidth: PropTypes.number,
     dragZone: PropTypes.string,
     padding: PropTypes.number,
@@ -36,11 +37,11 @@ class DeckImpl extends React.Component {
 
     if (cards.length > 0) {
       topCardProps = cards[cards.length - 1].props;
+      topCardProps = { id: topCardProps.id, data: topCardProps.data };
     }
 
     if (this.props.onClick) {
-      const { id, data } = topCardProps;
-      this.props.onClick({ id, data });
+      this.props.onClick(topCardProps);
     }
   };
 

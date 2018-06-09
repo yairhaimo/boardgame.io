@@ -48,7 +48,8 @@ class CardImpl extends React.Component {
   }
 
   onClick = () => {
-    this.props.onClick();
+    const { id, data } = this.props;
+    this.props.onClick({ id, data });
   };
 
   onDragEnd = () => {

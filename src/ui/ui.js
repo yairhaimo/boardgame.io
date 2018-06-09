@@ -122,6 +122,11 @@ class UI extends React.Component {
     if (card.deckID) {
       const deck = this.decks[card.deckID];
       deck.cards = deck.cards.filter(item => item != cardID);
+
+      if (deck.props.onRemove) {
+        const { id, data } = card.props;
+        deck.props.onRemove({ id, data });
+      }
     }
 
     card.deckID = deckID;
