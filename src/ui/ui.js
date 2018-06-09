@@ -31,8 +31,18 @@ class UI extends React.Component {
     this.cards = {};
     this.decks = {};
     this.originalCards = new Set();
+    this.extractChildren(props.children);
+  }
 
-    React.Children.forEach(props.children, child => {
+  /**
+   * Recursively extracts all the Card and Deck elements
+   * in the subtree of this node and adds them to appropriate
+   * data structures.
+   *
+   * @param {object} children - A React props.children object.
+   */
+  extractChildren(children) {
+    React.Children.forEach(children, child => {
       if (child.type == Card) {
         this.cards[child.props.id] = {
           props: child.props,
@@ -40,7 +50,7 @@ class UI extends React.Component {
           deckID: null,
         };
         this.originalCards.add(child.props.id);
-      } else {
+      } else if (child.type == Deck) {
         const deckID = child.props.id;
         let cardIDs = [];
 
@@ -57,6 +67,8 @@ class UI extends React.Component {
           props: child.props,
           cards: cardIDs,
         };
+      } else {
+        this.extractChildren(child.props.children);
       }
     });
   }

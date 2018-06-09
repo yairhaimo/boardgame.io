@@ -19,7 +19,9 @@ class Board extends React.Component {
 
         <Deck id="2" onDrop={() => console.log('drop')} />
 
-        <Card id="2" back={2} />
+        <div>
+          <Card id="2" back={2} />
+        </div>
       </UI>
     );
   }

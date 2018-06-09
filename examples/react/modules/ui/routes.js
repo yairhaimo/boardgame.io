@@ -11,7 +11,7 @@ import Singleplayer from './components/singleplayer';
 const routes = [
   {
     path: '/ui',
-    text: 'Singleplayer',
+    text: 'Cards & Decks',
     component: Singleplayer,
   },
 ];
