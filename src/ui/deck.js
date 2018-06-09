@@ -14,7 +14,7 @@ import './deck.css';
 
 class DeckImpl extends React.Component {
   static propTypes = {
-    context: PropTypes.any.isRequired,
+    context: PropTypes.any,
     id: PropTypes.string.isRequired,
     children: PropTypes.any,
     onClick: PropTypes.func,
@@ -23,6 +23,7 @@ class DeckImpl extends React.Component {
     splayWidth: PropTypes.number,
     dragZone: PropTypes.string,
     padding: PropTypes.number,
+    className: PropTypes.string,
   };
 
   static defaultProps = {
@@ -71,6 +72,7 @@ class DeckImpl extends React.Component {
             return (
               <div
                 {...events}
+                className={this.props.className}
                 style={{
                   background: '#eee',
                   marginRight: 20,

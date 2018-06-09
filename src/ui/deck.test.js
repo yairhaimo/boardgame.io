@@ -15,22 +15,21 @@ import Adapter from 'enzyme-adapter-react-16';
 
 Enzyme.configure({ adapter: new Adapter() });
 
-test('basic', () => {
-  const cards = [<Card key={0} />, <Card key={1} />];
-
-  {
+describe('basic', () => {
+  test('cards are rendered', () => {
+    const cards = [<Card key={0} id="0" />, <Card key={1} id="1" />];
     const deck = Enzyme.shallow(
       <UI>
-        <Deck>{cards}</Deck>
+        <Deck id="1">{cards}</Deck>
       </UI>
     );
-    expect(deck.html()).toContain('svg');
-  }
+    expect(deck.find(Card).length).toBe(2);
+  });
 
-  {
-    const deck = Enzyme.shallow(<Deck className="custom" />);
+  test('custom class', () => {
+    const deck = Enzyme.shallow(<Deck id="1" className="custom" />);
     expect(deck.html()).toContain('custom');
-  }
+  });
 });
 
 test('splayWidth', () => {
@@ -43,7 +42,9 @@ test('splayWidth', () => {
   const splayWidth = 10;
   const deck = Enzyme.shallow(
     <UI>
-      <Deck splayWidth={splayWidth}>{cards}</Deck>
+      <Deck id="1" splayWidth={splayWidth}>
+        {cards}
+      </Deck>
     </UI>
   );
 
