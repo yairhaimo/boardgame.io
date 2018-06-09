@@ -102,7 +102,7 @@ class UI extends React.Component {
     });
   }
 
-  setPosition = (cardID, position) => {
+  changeCardPosition = (cardID, position) => {
     if (!this.props.sandboxMode) {
       return;
     }
@@ -111,7 +111,7 @@ class UI extends React.Component {
     this.forceUpdate();
   };
 
-  drop = (cardID, deckID) => {
+  dropCard = (cardID, deckID) => {
     if (!this.props.sandboxMode) {
       return;
     }
@@ -143,8 +143,8 @@ class UI extends React.Component {
   getContext = () => ({
     genID: () => ++this._nextID,
     sandboxMode: this.props.sandboxMode,
-    setPosition: this.setPosition,
-    drop: this.drop,
+    changeCardPosition: this.changeCardPosition,
+    dropCard: this.dropCard,
   });
 
   componentDidMount() {

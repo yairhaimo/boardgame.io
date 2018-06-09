@@ -46,7 +46,7 @@ class DeckImpl extends React.Component {
   };
 
   onDrop = cardProps => {
-    this.props.context.drop(cardProps.id, this.props.id);
+    this.props.context.dropCard(cardProps.id, this.props.id);
 
     if (this.props.onDrop) {
       const { id, data } = cardProps;
