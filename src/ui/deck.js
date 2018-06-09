@@ -31,8 +31,16 @@ class DeckImpl extends React.Component {
   };
 
   onClick = () => {
+    const cards = React.Children.toArray(this.props.children);
+    let topCardProps = null;
+
+    if (cards.length > 0) {
+      topCardProps = cards[cards.length - 1].props;
+    }
+
     if (this.props.onClick) {
-      this.props.onClick();
+      const { id, data } = topCardProps;
+      this.props.onClick({ id, data });
     }
   };
 
@@ -40,7 +48,8 @@ class DeckImpl extends React.Component {
     this.props.context.drop(cardProps.id, this.props.id);
 
     if (this.props.onDrop) {
-      this.props.onDrop(cardProps);
+      const { id, data } = cardProps;
+      this.props.onDrop({ id, data });
     }
   };
 
@@ -48,7 +57,6 @@ class DeckImpl extends React.Component {
     let cardIndex = 0;
     const cards = React.Children.map(this.props.children, card =>
       React.cloneElement(card, {
-        onClick: this.onClick,
         dragZone: this.props.dragZone,
         inDeck: true,
         deckPosition: cardIndex++,
@@ -56,27 +64,29 @@ class DeckImpl extends React.Component {
     );
 
     return (
-      <Droppable accepts={this.props.dragZone} onDrop={this.onDrop}>
-        {({ events }) => {
-          return (
-            <div
-              {...events}
-              style={{
-                background: '#eee',
-                marginRight: 20,
-                padding: this.props.padding,
-                position: 'relative',
-                width: '100px',
-                height: '140px',
-                display: 'block',
-                float: 'left',
-              }}
-            >
-              {cards}
-            </div>
-          );
-        }}
-      </Droppable>
+      <div onClick={this.onClick}>
+        <Droppable accepts={this.props.dragZone} onDrop={this.onDrop}>
+          {({ events }) => {
+            return (
+              <div
+                {...events}
+                style={{
+                  background: '#eee',
+                  marginRight: 20,
+                  padding: this.props.padding,
+                  position: 'relative',
+                  width: '100px',
+                  height: '140px',
+                  display: 'block',
+                  float: 'left',
+                }}
+              >
+                {cards}
+              </div>
+            );
+          }}
+        </Droppable>
+      </div>
     );
   }
 }

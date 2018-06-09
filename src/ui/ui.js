@@ -13,6 +13,9 @@ import { Deck } from './deck';
 
 const UIContext = React.createContext();
 
+/**
+ * Root element of the UI framework.
+ */
 class UI extends React.Component {
   static propTypes = {
     children: PropTypes.any,
@@ -26,11 +29,37 @@ class UI extends React.Component {
   constructor(props) {
     super(props);
 
+    /**
+     * Used for generating ID's of elements in the subtree.
+     * @private
+     */
     this._nextID = 0;
+
+    /**
+     * The zIndex of the most recently dragged card.
+     * Incremented by 1 every time a new card is dragged.
+     * @private
+     */
     this._zIndex = 5;
+
+    /**
+     * Object containing all the Card's.
+     * @private
+     */
     this.cards = {};
+
+    /**
+     * Object containing all the Deck's.
+     * @private
+     */
     this.decks = {};
+
+    /**
+     * ID's of the Card's that were originally children of this UI element.
+     * @private
+     */
     this.originalCards = new Set();
+
     this.extractChildren(props.children);
   }
 
@@ -67,7 +96,7 @@ class UI extends React.Component {
           props: child.props,
           cards: cardIDs,
         };
-      } else {
+      } else if (child.props && child.props.children) {
         this.extractChildren(child.props.children);
       }
     });
@@ -113,7 +142,7 @@ class UI extends React.Component {
     drop: this.drop,
   });
 
-  componentWillMount() {
+  componentDidMount() {
     this._nextID = 0;
   }
 

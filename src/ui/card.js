@@ -26,6 +26,7 @@ class CardImpl extends React.Component {
     context: PropTypes.any.isRequired,
     position: PropTypes.any,
     inDeck: PropTypes.bool,
+    data: PropTypes.any,
     deckPosition: PropTypes.number,
   };
 
@@ -86,13 +87,13 @@ class CardImpl extends React.Component {
           top: position.y,
         };
       }
+    }
 
-      if (this.props.inDeck) {
-        cardStyle = {
-          position: 'absolute',
-          zIndex: this.props.deckPosition,
-        };
-      }
+    if (this.props.inDeck) {
+      cardStyle = {
+        position: 'absolute',
+        zIndex: this.props.deckPosition,
+      };
     }
 
     const draggable = (
@@ -100,7 +101,7 @@ class CardImpl extends React.Component {
         id={this.props.id}
         type={this.props.dragZone}
         onDragEnd={this.onDragEnd}
-        data={{ ...this.props }}
+        data={{ id: this.props.id, data: this.props.data }}
       >
         {({ isActive, events }) => {
           return (
