@@ -8,7 +8,7 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import { UIContext } from './ui';
+import UIContext from './ui-context';
 import { Droppable } from 'react-dragtastic';
 import './deck.css';
 

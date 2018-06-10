@@ -10,8 +10,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { Card } from './card';
 import { Deck } from './deck';
-
-const UIContext = React.createContext();
+import UIContext from './ui-context';
 
 /**
  * Root element of the UI framework.
@@ -197,4 +196,4 @@ class UI extends React.Component {
   }
 }
 
-export { UI, UIContext };
+export { UI };

@@ -9,7 +9,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import Logo from './logo';
-import { UIContext } from './ui';
+import UIContext from './ui-context';
 import { Draggable, DragComponent } from 'react-dragtastic';
 import './card.css';
 
