@@ -23,6 +23,7 @@
   width: 100px;
   height: 140px;
   overflow: hidden;
+  transition: transform 0.1s;
 }
 
 .bgio-card.placeholder {
@@ -33,6 +34,7 @@
 
 .bgio-card.accept {
   transform: rotate(10deg);
+  box-shadow: 5px 5px 5px #ddd;
 }
 
 .bgio-card.reject {

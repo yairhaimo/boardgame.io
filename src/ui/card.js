@@ -154,6 +154,7 @@ class CardImpl extends React.Component {
                 pointerEvents: 'none',
                 position: 'fixed',
                 zIndex: 2000000000,
+                boxShadow: '5px 5px 5px #eee',
                 left: x - 50,
                 top: y - 70,
               }}
