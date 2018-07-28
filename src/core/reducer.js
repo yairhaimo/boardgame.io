@@ -6,6 +6,7 @@
  * https://opensource.org/licenses/MIT.
  */
 
+import { parse, stringify } from 'flatted';
 import * as Actions from './action-types';
 import { Random } from './random';
 import { Events } from './events';
@@ -24,10 +25,15 @@ export function CreateGameReducer({ game, numPlayers, multiplayer }) {
   }
 
   let ctx = game.flow.ctx(numPlayers);
-  ctx._random = { seed: game.seed };
+
+  let seed = game.seed;
+  if (seed === undefined) {
+    seed = Random.seed();
+  }
+  ctx._random = { seed };
 
   const random = new Random(ctx);
-  const ctxWithAPI = random.attach(ctx);
+  let ctxWithAPI = random.attach(ctx);
 
   const initial = {
     // User managed state.
@@ -56,14 +62,18 @@ export function CreateGameReducer({ game, numPlayers, multiplayer }) {
     _initial: {},
   };
 
+  const events = new Events(game.flow, ctx.currentPlayer);
+  ctxWithAPI = events.attach(ctxWithAPI);
+
   const state = game.flow.init({ G: initial.G, ctx: ctxWithAPI });
 
   initial.G = state.G;
   initial._undo = state._undo;
   initial.ctx = random.update(state.ctx);
   initial.ctx = Random.detach(initial.ctx);
+  initial.ctx = Events.detach(initial.ctx);
 
-  const deepCopy = obj => JSON.parse(JSON.stringify(obj));
+  const deepCopy = obj => parse(stringify(obj));
   initial._initial = deepCopy(initial);
 
   /**
@@ -120,6 +130,8 @@ export function CreateGameReducer({ game, numPlayers, multiplayer }) {
 
         // Ignore the move if the player cannot make it at this point.
         if (
+          action.payload.playerID !== null &&
+          action.payload.playerID !== undefined &&
           !game.flow.canPlayerMakeMove(
             state.G,
             state.ctx,

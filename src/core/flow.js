@@ -9,7 +9,7 @@
 import { TurnOrder } from './turn-order';
 import { Random } from './random';
 import { Events } from './events';
-import { gameEvent } from './action-creators';
+import { automaticGameEvent } from './action-creators';
 
 /**
  * Helper to create a reducer that manages ctx (with the
@@ -96,13 +96,6 @@ export function Flow({
     optimisticUpdate,
 
     canPlayerMakeMove: (G, ctx, playerID) => {
-      // In multiplayer mode, the default playerID is null, which corresponds
-      // to a spectator that can't make moves.
-      if (playerID === null) return false;
-      // In singleplayer mode (and most unit tests), the default playerID
-      // is undefined, and can always make moves.
-      if (playerID === undefined) return true;
-      // playerID must be in actionPlayers.
       const actionPlayers = ctx.actionPlayers || [];
       return actionPlayers.includes(playerID) || actionPlayers.includes('any');
     },
@@ -426,7 +419,7 @@ export function FlowWithPhases({
       if (end) {
         state = this.dispatch(
           state,
-          gameEvent('endPhase', [end, cascadeDepth + 1], this.playerID)
+          automaticGameEvent('endPhase', [end, cascadeDepth + 1], this.playerID)
         );
       }
     }
@@ -437,7 +430,7 @@ export function FlowWithPhases({
     if (endTurn && state.ctx.turn == origTurn) {
       state = this.dispatch(
         state,
-        gameEvent('endTurn', [endTurn], this.playerID)
+        automaticGameEvent('endTurn', [endTurn], this.playerID)
       );
     }
 
@@ -501,7 +494,7 @@ export function FlowWithPhases({
     if (end) {
       return this.dispatch(
         { ...state, G, ctx },
-        gameEvent('endPhase', [end], this.playerID)
+        automaticGameEvent('endPhase', [end], this.playerID)
       );
     }
 
@@ -543,7 +536,7 @@ export function FlowWithPhases({
     if (endPhase || gameover !== undefined) {
       state = dispatch(
         state,
-        gameEvent('endPhase', [endPhase], action.playerID)
+        automaticGameEvent('endPhase', [endPhase], action.playerID)
       );
       // Update to the new phase configuration
       conf = phaseMap[state.ctx.phase];
@@ -553,7 +546,10 @@ export function FlowWithPhases({
     // (but not if endPhase above already ends the turn).
     const endTurn = shouldEndTurn(state);
     if (state.ctx.turn == origTurn && (endTurn || gameover !== undefined)) {
-      state = dispatch(state, gameEvent('endTurn', [endTurn], action.playerID));
+      state = dispatch(
+        state,
+        automaticGameEvent('endTurn', [endTurn], action.playerID)
+      );
     }
 
     // End the game automatically if endGameIf returns.

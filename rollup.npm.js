@@ -6,6 +6,7 @@
  * https://opensource.org/licenses/MIT.
  */
 
+import builtins from 'rollup-plugin-node-builtins';
 import resolve from 'rollup-plugin-node-resolve';
 import replace from 'rollup-plugin-replace';
 import babel from 'rollup-plugin-babel';
@@ -31,6 +32,7 @@ const globals = {
   'react-dragtastic': 'ReactDragtastic',
   mousetrap: 'Mousetrap',
   'socket.io-client': 'io',
+  flatted: 'Flatted',
 };
 
 export default [
@@ -77,6 +79,8 @@ export default [
 
   {
     input: 'packages/core.js',
+    external: Object.keys(globals),
+    globals,
     output: { file: 'dist/core.js', format: 'umd' },
     name: 'Core',
     plugins,
@@ -84,6 +88,8 @@ export default [
 
   {
     input: 'packages/ai.js',
+    external: Object.keys(globals),
+    globals,
     output: { file: 'dist/ai.js', format: 'umd' },
     name: 'AI',
     plugins,
@@ -129,8 +135,9 @@ export default [
     output: [{ file: pkg.unpkg, format: 'umd' }],
     name: 'BoardgameIO',
     plugins: plugins.concat([
+      builtins(),
       commonjs(),
-      resolve({ browser: true }),
+      resolve({ browser: true, preferBuiltins: false }),
       replace({
         'process.env.NODE_ENV': JSON.stringify('production'),
       }),
