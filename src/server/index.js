@@ -18,129 +18,57 @@ import { createApiServer, isActionFromAuthenticPlayer } from './api';
 const PING_TIMEOUT = 20 * 1e3;
 const PING_INTERVAL = 10 * 1e3;
 
-export function Server({ games, db, _clientInfo, _roomInfo }) {
-  const app = new Koa();
-  const io = new IO({
-    ioOptions: {
-      pingTimeout: PING_TIMEOUT,
-      pingInterval: PING_INTERVAL,
-    },
-  });
-  app.context.io = io;
-  io.attach(app);
+function GameMaster(game, db) {
+  const onUpdate = async (action, stateID, gameID, playerID) => {
+    let state = await db.get(gameID);
 
-  if (db === undefined) {
-    db = DBFromEnv();
-  }
+    if (state === undefined) {
+      return { error: 'game not found' };
+    }
 
-  const api = createApiServer({ db, games });
+    const reducer = CreateGameReducer({
+      game,
+      numPlayers: state.ctx.numPlayers,
+    });
+    const store = Redux.createStore(reducer, state);
 
-  const clientInfo = _clientInfo || new Map();
-  const roomInfo = _roomInfo || new Map();
+    const isActionAuthentic = await isActionFromAuthenticPlayer({
+      action,
+      db,
+      gameID,
+      playerID,
+    });
+    if (!isActionAuthentic) {
+      return { error: 'unauthorized action' };
+    }
 
-  for (const game of games) {
-    const nsp = app._io.of(game.name);
+    // Check whether the player is allowed to make the move.
+    if (
+      action.type == MAKE_MOVE &&
+      !game.flow.canPlayerMakeMove(state.G, state.ctx, playerID)
+    ) {
+      return;
+    }
 
-    nsp.on('connection', socket => {
-      socket.on('update', async (action, stateID, gameID, playerID) => {
-        let state = await db.get(gameID);
+    // Check whether the player is allowed to call the event.
+    if (
+      action.type == GAME_EVENT &&
+      !game.flow.canPlayerCallEvent(state.G, state.ctx, playerID)
+    ) {
+      return;
+    }
 
-        if (state === undefined) {
-          return { error: 'game not found' };
-        }
+    if (state._stateID == stateID) {
+      let log = store.getState().log || [];
 
-        const reducer = CreateGameReducer({
-          game,
-          numPlayers: state.ctx.numPlayers,
-        });
-        const store = Redux.createStore(reducer, state);
+      // Update server's version of the store.
+      store.dispatch(action);
+      state = store.getState();
 
-        const isActionAuthentic = await isActionFromAuthenticPlayer({
-          action,
-          db,
-          gameID,
-          playerID,
-        });
-        if (!isActionAuthentic) {
-          return { error: 'unauthorized action' };
-        }
-
-        // Check whether the player is allowed to make the move.
-        if (
-          action.type == MAKE_MOVE &&
-          !game.flow.canPlayerMakeMove(state.G, state.ctx, playerID)
-        ) {
-          return;
-        }
-
-        // Check whether the player is allowed to call the event.
-        if (
-          action.type == GAME_EVENT &&
-          !game.flow.canPlayerCallEvent(state.G, state.ctx, playerID)
-        ) {
-          return;
-        }
-
-        if (state._stateID == stateID) {
-          let log = store.getState().log || [];
-
-          // Update server's version of the store.
-          store.dispatch(action);
-          state = store.getState();
-
-          // Get clients connected to this current game.
-          const roomClients = roomInfo.get(gameID);
-          for (const client of roomClients.values()) {
-            const { playerID } = clientInfo.get(client);
-            const filteredState = {
-              ...state,
-              G: game.playerView(state.G, state.ctx, playerID),
-              ctx: { ...state.ctx, _random: undefined },
-              log: undefined,
-              deltalog: undefined,
-            };
-
-            if (client === socket.id) {
-              socket.emit('update', gameID, filteredState, state.deltalog);
-            } else {
-              socket
-                .to(client)
-                .emit('update', gameID, filteredState, state.deltalog);
-            }
-          }
-
-          // TODO: We currently attach the log back into the state
-          // object before storing it, but this should probably
-          // sit in a different part of the database eventually.
-          log = [...log, ...state.deltalog];
-          const stateWithLog = { ...state, log };
-
-          await db.set(gameID, stateWithLog);
-        }
-
-        return;
-      });
-
-      socket.on('sync', async (gameID, playerID, numPlayers) => {
-        socket.join(gameID);
-        const reducer = CreateGameReducer({ game, numPlayers });
-        let roomClients = roomInfo.get(gameID);
-        if (roomClients === undefined) {
-          roomClients = new Set();
-          roomInfo.set(gameID, roomClients);
-        }
-        roomClients.add(socket.id);
-
-        clientInfo.set(socket.id, { gameID, playerID });
-
-        let state = await db.get(gameID);
-
-        if (state === undefined) {
-          const store = Redux.createStore(reducer);
-          state = store.getState();
-          await db.set(gameID, state);
-        }
-
+      // Get clients connected to this current game.
+      const roomClients = roomInfo.get(gameID);
+      for (const client of roomClients.values()) {
+        const { playerID } = clientInfo.get(client);
         const filteredState = {
           ...state,
           G: game.playerView(state.G, state.ctx, playerID),
@@ -149,20 +77,124 @@ export function Server({ games, db, _clientInfo, _roomInfo }) {
           deltalog: undefined,
         };
 
-        socket.emit('sync', gameID, filteredState, state.log);
-
-        return;
-      });
-
-      socket.on('disconnect', () => {
-        if (clientInfo.has(socket.id)) {
-          const { gameID } = clientInfo.get(socket.id);
-          roomInfo.get(gameID).delete(socket.id);
-          clientInfo.delete(socket.id);
+        if (client === socket.id) {
+          socket.emit('update', gameID, filteredState, state.deltalog);
+        } else {
+          socket
+            .to(client)
+            .emit('update', gameID, filteredState, state.deltalog);
         }
+      }
+
+      // TODO: We currently attach the log back into the state
+      // object before storing it, but this should probably
+      // sit in a different part of the database eventually.
+      log = [...log, ...state.deltalog];
+      const stateWithLog = { ...state, log };
+
+      await db.set(gameID, stateWithLog);
+    }
+
+    return;
+  };
+
+  const onSync = async (gameID, playerID, numPlayers) => {
+    socket.join(gameID);
+    const reducer = CreateGameReducer({ game, numPlayers });
+    let roomClients = roomInfo.get(gameID);
+    if (roomClients === undefined) {
+      roomClients = new Set();
+      roomInfo.set(gameID, roomClients);
+    }
+    roomClients.add(socket.id);
+
+    clientInfo.set(socket.id, { gameID, playerID });
+
+    let state = await db.get(gameID);
+
+    if (state === undefined) {
+      const store = Redux.createStore(reducer);
+      state = store.getState();
+      await db.set(gameID, state);
+    }
+
+    const filteredState = {
+      ...state,
+      G: game.playerView(state.G, state.ctx, playerID),
+      ctx: { ...state.ctx, _random: undefined },
+      log: undefined,
+      deltalog: undefined,
+    };
+
+    socket.emit('sync', gameID, filteredState, state.log);
+
+    return;
+  };
+
+  return {
+    onUpdate,
+    onSync,
+  };
+}
+
+function SocketInterface(app, games, _clientInfo, _roomInfo) {
+  const clientInfo = _clientInfo || new Map();
+  const roomInfo = _roomInfo || new Map();
+
+  const io = new IO({
+    ioOptions: {
+      pingTimeout: PING_TIMEOUT,
+      pingInterval: PING_INTERVAL,
+    },
+  });
+
+  app.context.io = io;
+  io.attach(app);
+
+  return {
+    registerGame: (game) => {
+      const nsp = app._io.of(game.name);
+
+      const master = new GameMaster(game, app.context.db);
+
+      nsp.on('connection', socket => {
+        socket.on('update', async (action, stateID, gameID, playerID) => {
+          await master.onUpdate(socket, action, stateID, gameID, playerID);
+        });
+
+        socket.on('sync', async (gameID, playerID, numPlayers) => {
+          await master.onSync(socket, gameID, playerID, numPlayers);
+        });
+
+        socket.on('disconnect', () => {
+          if (clientInfo.has(socket.id)) {
+            const { gameID } = clientInfo.get(socket.id);
+            roomInfo.get(gameID).delete(socket.id);
+            clientInfo.delete(socket.id);
+          }
+        });
       });
-    });
+    }
+  };
+}
+
+export function Server({ games, db, clientInterface, _clientInfo, _roomInfo }) {
+  const app = new Koa();
+
+  if (db === undefined) {
+    db = DBFromEnv();
   }
+  app.context.db = db;
+
+  if (clientInterface === undefined) {
+    clientInterface = SocketInterface(app, _clientInfo, _roomInfo);
+  }
+
+  for (const game of games) {
+    clientInterface.registerGame(game);
+  }
+
+  const api = createApiServer({ db, games });
 
   return {
     app,
