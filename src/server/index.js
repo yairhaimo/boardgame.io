@@ -99,17 +99,7 @@ function GameMaster(game, db) {
   };
 
   const onSync = async (gameID, playerID, numPlayers) => {
-    socket.join(gameID);
     const reducer = CreateGameReducer({ game, numPlayers });
-    let roomClients = roomInfo.get(gameID);
-    if (roomClients === undefined) {
-      roomClients = new Set();
-      roomInfo.set(gameID, roomClients);
-    }
-    roomClients.add(socket.id);
-
-    clientInfo.set(socket.id, { gameID, playerID });
-
     let state = await db.get(gameID);
 
     if (state === undefined) {
@@ -137,43 +127,56 @@ function GameMaster(game, db) {
   };
 }
 
-function SocketInterface(app, games, _clientInfo, _roomInfo) {
+function SocketInterface(_clientInfo, _roomInfo) {
   const clientInfo = _clientInfo || new Map();
   const roomInfo = _roomInfo || new Map();
 
-  const io = new IO({
-    ioOptions: {
-      pingTimeout: PING_TIMEOUT,
-      pingInterval: PING_INTERVAL,
-    },
-  });
-
-  app.context.io = io;
-  io.attach(app);
-
   return {
-    registerGame: (game) => {
-      const nsp = app._io.of(game.name);
-
-      const master = new GameMaster(game, app.context.db);
-
-      nsp.on('connection', socket => {
-        socket.on('update', async (action, stateID, gameID, playerID) => {
-          await master.onUpdate(socket, action, stateID, gameID, playerID);
-        });
-
-        socket.on('sync', async (gameID, playerID, numPlayers) => {
-          await master.onSync(socket, gameID, playerID, numPlayers);
-        });
-
-        socket.on('disconnect', () => {
-          if (clientInfo.has(socket.id)) {
-            const { gameID } = clientInfo.get(socket.id);
-            roomInfo.get(gameID).delete(socket.id);
-            clientInfo.delete(socket.id);
-          }
-        });
+    init: (app, games) => {
+      const io = new IO({
+        ioOptions: {
+          pingTimeout: PING_TIMEOUT,
+          pingInterval: PING_INTERVAL,
+        },
       });
+
+      app.context.io = io;
+      io.attach(app);
+
+      for (const game in games) {
+        const nsp = app._io.of(game.name);
+
+        const master = new GameMaster(game, app.context.db);
+
+        nsp.on('connection', socket => {
+          socket.on('update', async (action, stateID, gameID, playerID) => {
+            await master.onUpdate(socket, action, stateID, gameID, playerID);
+          });
+
+          socket.on('sync', async (gameID, playerID, numPlayers) => {
+            socket.join(gameID);
+
+            let roomClients = roomInfo.get(gameID);
+            if (roomClients === undefined) {
+              roomClients = new Set();
+              roomInfo.set(gameID, roomClients);
+            }
+            roomClients.add(socket.id);
+
+            clientInfo.set(socket.id, { gameID, playerID });
+
+            await master.onSync(socket, gameID, playerID, numPlayers);
+          });
+
+          socket.on('disconnect', () => {
+            if (clientInfo.has(socket.id)) {
+              const { gameID } = clientInfo.get(socket.id);
+              roomInfo.get(gameID).delete(socket.id);
+              clientInfo.delete(socket.id);
+            }
+          });
+        });
+      }
     }
   };
 }
@@ -189,10 +192,7 @@ export function Server({ games, db, clientInterface, _clientInfo, _roomInfo }) {
   if (clientInterface === undefined) {
     clientInterface = SocketInterface(app, _clientInfo, _roomInfo);
   }
-
-  for (const game of games) {
-    clientInterface.registerGame(game);
-  }
+  clientInterface.init(app, games);
 
   const api = createApiServer({ db, games });
 
